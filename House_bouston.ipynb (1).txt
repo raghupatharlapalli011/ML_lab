@@ -1,0 +1,160 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1838fa4b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "from sklearn.datasets import fetch_openml\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.linear_model import LinearRegression, Ridge, Lasso\n",
+    "from sklearn.tree import DecisionTreeRegressor\n",
+    "from sklearn.ensemble import RandomForestRegressor\n",
+    "from sklearn.svm import SVR\n",
+    "from sklearn.preprocessing import StandardScaler\n",
+    "from sklearn.pipeline import make_pipeline\n",
+    "from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0d9c2039",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "boston = fetch_openml(name=\"boston\", version=1, as_frame=True)\n",
+    "\n",
+    "# Convert all columns to numeric\n",
+    "X = boston.data.apply(pd.to_numeric, errors=\"coerce\")\n",
+    "y = pd.to_numeric(boston.target, errors=\"coerce\")\n",
+    "\n",
+    "# Remove missing values if any\n",
+    "data = pd.concat([X, y.rename(\"PRICE\")], axis=1)\n",
+    "data = data.dropna()\n",
+    "\n",
+    "X = data.drop(\"PRICE\", axis=1)\n",
+    "y = data[\"PRICE\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "279cd798",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(\n",
+    "    X, y, test_size=0.2, random_state=42\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "661a4580",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Function to Evaluate Models\n",
+    "# --------------------------------------------------\n",
+    "def evaluate_model(name, model):\n",
+    "\n",
+    "    model.fit(X_train, y_train)\n",
+    "\n",
+    "    y_pred = model.predict(X_test)\n",
+    "\n",
+    "    mae = mean_absolute_error(y_test, y_pred)\n",
+    "    mse = mean_squared_error(y_test, y_pred)\n",
+    "    rmse = np.sqrt(mse)\n",
+    "    r2 = r2_score(y_test, y_pred)\n",
+    "\n",
+    "    print(\"\\n\" + \"=\" * 50)\n",
+    "    print(name)\n",
+    "    print(\"=\" * 50)\n",
+    "    print(\"MAE :\", round(mae, 3))\n",
+    "    print(\"MSE :\", round(mse, 3))\n",
+    "    print(\"RMSE:\", round(rmse, 3))\n",
+    "    print(\"R2 Score:\", round(r2, 3))\n",
+    "\n",
+    "    return r2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c152df97",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Models\n",
+    "# --------------------------------------------------\n",
+    "models = {\n",
+    "    \"Linear Regression\": LinearRegression(),\n",
+    "    \"Ridge Regression\": Ridge(alpha=1.0),\n",
+    "    \"Lasso Regression\": Lasso(alpha=0.1),\n",
+    "    \"Decision Tree Regression\": DecisionTreeRegressor(random_state=42),\n",
+    "    \"Random Forest Regression\": RandomForestRegressor(\n",
+    "        n_estimators=100,\n",
+    "        random_state=42\n",
+    "    ),\n",
+    "    \"Support Vector Regression\":\n",
+    "        make_pipeline(\n",
+    "            StandardScaler(),\n",
+    "            SVR(kernel=\"rbf\")\n",
+    "        )\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "001d74e5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Train and Compare Models\n",
+    "# --------------------------------------------------\n",
+    "scores = {}\n",
+    "\n",
+    "for name, model in models.items():\n",
+    "    scores[name] = evaluate_model(name, model)\n",
+    "\n",
+    "# --------------------------------------------------\n",
+    "# Best Model\n",
+    "# --------------------------------------------------\n",
+    "best_model = max(scores, key=scores.get)\n",
+    "\n",
+    "print(\"\\n\" + \"=\" * 50)\n",
+    "print(\"Best Model :\", best_model)\n",
+    "print(\"Best R2 Score :\", round(scores[best_model], 3))\n",
+    "print(\"=\" * 50)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.14.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
